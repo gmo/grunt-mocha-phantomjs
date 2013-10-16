@@ -13,4 +13,18 @@ describe('Test', function(){
       expect(1+1+1).to.equal(3);
     });
   });
+
+    describe('should fail', function(){
+        it("should equal 2", function() {
+            expect(1+1).to.equal(1);
+        });
+
+        it("should not equal 3", function() {
+            expect(1+1).to.not.equal(2);
+        });
+
+        it("should equal 3", function() {
+            expect(1+1+1).to.equal(2);
+        });
+    });
 });

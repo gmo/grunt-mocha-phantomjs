@@ -91,11 +91,12 @@ module.exports = function(grunt) {
       });
 
     }, function(){
-      // Fail if errors are reported and we aren't outputing to a file
-      if(!output && errors > 0) {
-        grunt.fail.warn(errors + " tests failed");
-      } else if(output) {
-        grunt.file.write(output, results);
+      if(output) {
+         grunt.file.write(output, results);
+      }
+
+      if(errors > 0) {
+          grunt.fail.warn(errors + " tests failed");
       }
       done();
     });
