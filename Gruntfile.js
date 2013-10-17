@@ -38,6 +38,15 @@ module.exports = function(grunt) {
         files: {
           src: ['test/index.html']
         }
+      },
+      outputToDir: {
+          options: {
+              'reporter': 'tap',
+              'outputDir': 'results/'
+          },
+          files: {
+              src: ['test/*.html']
+          }
       }
     }
   });

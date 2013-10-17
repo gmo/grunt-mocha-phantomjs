@@ -37,10 +37,15 @@ Default: `spec`
 
 The reporter that should be used. See [the supported reporters](https://github.com/metaskills/mocha-phantomjs#supported-reporters) for more information.
 
-#### output
+#### output / outputFile
 Type: `String`  
 
-The file that the task should output the results to. If `output` is specified, the task will always complete and not throw an error code if errors are found. The CI will determine if the build failed or not.
+The file that the task should output the results to. If `output` or `outputFile` is specified, the task will always complete and not throw an error code if errors are found. The CI will determine if the build failed or not.
+
+#### outputDir
+Type: `String`
+
+The directory that the task should output the results to.  Each html page that is tested will generate a separate file in the outputDir formatted based on the reporter selected.
 
 #### urls
 Type: `Array`  
@@ -71,7 +76,21 @@ grunt.initConfig({
   mocha_phantomjs: {
     options: {
       'reporter': 'xunit',
-      'output': 'tests/results/result.xml'
+      'outputFile': 'tests/results/result.xml'
+    },
+    all: ['test/**/*.html']
+  }
+});
+```
+#### Directory output for CI
+
+```js
+// Project configuration.
+grunt.initConfig({
+  mocha_phantomjs: {
+    options: {
+      'reporter': 'tap',
+      'outputDir': 'tests/results'
     },
     all: ['test/**/*.html']
   }
@@ -110,6 +129,7 @@ grunt.registerTask('test', ['connect', 'mocha_phantomjs']);
 
 ## Release History
 
+* 2013-10-17   v0.3.X   Added ability to output each of the html page results to a directory
 * 2013-07-05   v0.3.0   Upgrade mocha-phantomjs to 3.1.0
 * 2013-04-19   v0.2.8   Fix path to mocha-phantomjs binary on windows when not installed with plugin
 * 2013-04-19   v0.2.7   Fixes error thrown when tests pass and no output file specified
