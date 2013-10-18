@@ -15,6 +15,19 @@ module.exports = function(grunt) {
       path = require("path"),
       exists = grunt.file.exists;
 
+    var createOutputDir = function ( dir ) {
+        if (dir && !exists(dir)) {
+            grunt.file.mkdir(dir);
+        }
+    };
+    var getTapFileName = function ( uri ) {
+        var uriParts = uri.split('/'),
+            filename = uriParts.pop(),
+            tapFilePrefix = (uriParts.length >= 2 ? uriParts.pop() + "-" : "");
+
+        return tapFilePrefix + filename;
+    };
+
   grunt.registerMultiTask('mocha_phantomjs', 'Run client-side mocha test with phantomjs.', function() {
     // Merge options
     var options        = this.options({
@@ -22,7 +35,6 @@ module.exports = function(grunt) {
           // Non file urls to test
           urls: []
         }),
-        files          = this.filesSrc,
         args           = [],
         binPath        = '.bin/mocha-phantomjs' + (process.platform === 'win32' ? '.cmd' : ''),
         phantomjs_path = path.join(__dirname, '..', '/node_modules/', binPath),
@@ -30,7 +42,9 @@ module.exports = function(grunt) {
         done           = this.async(),
         errors         = 0,
         results        = '',
-        output         = options.output || false;
+        outputFile     = options.output || options.outputFile || false,
+        outputDir      = options.outputDir || false,
+        fileExt        = options.reporter;
 
     // Check for a local install of mocha-phantomjs to use
     if (!exists(phantomjs_path)) {
@@ -49,9 +63,11 @@ module.exports = function(grunt) {
       grunt.fail.warn('Unable to find mocha-phantomjs.');
     }
 
+    createOutputDir(outputDir);
+
     // Loop through the options and add them to args
     // Omit urls from the options to be passed through
-    _.each(_.omit(options, 'urls', 'output'), function(value, key) {
+    _.each(_.omit(options, 'urls', 'outputFile', 'outputDir'), function(value, key) {
       // Convert to the key to a switch
       var sw = (key.length > 1 ? '--' : '-') + key;
       // Add the switch and its value
@@ -66,6 +82,8 @@ module.exports = function(grunt) {
     });
 
     util.async.forEachSeries(urls, function(f, next) {
+        var localResults = '';
+
       var phantomjs = grunt.util.spawn({
         cmd: phantomjs_path,
         args: _.flatten([f].concat(args))
@@ -77,22 +95,30 @@ module.exports = function(grunt) {
       phantomjs.stderr.pipe(process.stderr);
 
       // Append output to be written to a file
-      if(output) {
-        phantomjs.stdout.on('data', function(data){
-          results += String(data.toString());
-        });
-      }
+      phantomjs.stdout.on('data', function (data) {
+          var outputData = String(data.toString());
+
+          if (outputFile) {
+              results += outputData;
+          }
+          if (outputDir) {
+              localResults += outputData;
+          }
+      });
 
       phantomjs.on('exit', function(code){
         if (code === 127) {
           grunt.fail.warn("Phantomjs isn't installed");
         }
+        if (outputDir) {
+            grunt.file.write(path.join(outputDir, getTapFileName(f) + '.' + fileExt), localResults);
+        }
         errors += code;
       });
 
     }, function(){
-      if(output) {
-         grunt.file.write(output, results);
+      if(outputFile) {
+          grunt.file.write(outputFile, results);
       }
 
       if(errors > 0) {
